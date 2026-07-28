@@ -1,58 +1,304 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+Laravel Jetstream QR Code Login
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Авторизация через QR-код между устройствами.
 
-## About Laravel
+Проект позволяет войти в аккаунт на компьютере через подтверждение входа с телефона. Компьютер создаёт QR-код, телефон сканирует его, пользователь подтверждает вход, после чего компьютер автоматически получает авторизацию через WebSocket-событие.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Features
+QR Code authentication
+Login approval from another device
+Real-time communication using Laravel Reverb
+One-time QR sessions
+QR expiration handling
+Device information detection
+Automatic cleanup of expired sessions
+Automated tests
+Code style checking
+Static analysis
+GitHub Actions CI
+Stack
+Backend
+Laravel
+Laravel Jetstream
+Laravel Fortify
+Laravel Reverb
+MySQL
+PHPUnit
+Frontend
+Vue 3
+Inertia.js
+Vite
+Tailwind CSS
+Development tools
+Laravel Pint
+Larastan (PHPStan)
+GitHub Actions
+Requirements
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Before installation make sure you have:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+PHP >= 8.4
+Composer
+Node.js >= 22
+npm
+MySQL
+Installation
+1. Clone repository
+   git clone git@github.com:neforskiy/Laravel-Jetstream-Qr-Code-Login.git
 
-## Learning Laravel
+cd Laravel-Jetstream-Qr-Code-Login
+2. Install backend dependencies
+   composer install
+3. Install frontend dependencies
+   npm install
+4. Configure environment
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Create .env:
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+cp .env.example .env
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Generate application key:
 
-## Agentic Development
+php artisan key:generate
+Database setup
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Create MySQL database:
 
-```bash
-composer require laravel/boost --dev
+CREATE DATABASE laravel_qr_login;
 
-php artisan boost:install
-```
+Configure .env:
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel_qr_login
+DB_USERNAME=root
+DB_PASSWORD=
 
-## Contributing
+Run migrations:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+php artisan migrate
+Reverb configuration
 
-## Code of Conduct
+Configure WebSocket server in .env:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+BROADCAST_CONNECTION=reverb
 
-## Security Vulnerabilities
+REVERB_APP_ID=qr-login
+REVERB_APP_KEY=your_key
+REVERB_APP_SECRET=your_secret
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+REVERB_HOST=127.0.0.1
+REVERB_PORT=8080
+REVERB_SCHEME=http
 
-## License
+REVERB_SERVER_HOST=0.0.0.0
+REVERB_SERVER_PORT=8080
+Running the project
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Start Laravel server:
+
+php artisan serve
+
+Start Vite:
+
+npm run dev
+
+Start Reverb:
+
+php artisan reverb:start
+
+Start scheduler:
+
+php artisan schedule:work
+QR Login Flow
+1. Creating session
+
+The computer requests:
+
+POST /api/qr/session
+
+Server creates:
+
+login_sessions
+
+with:
+
+status = waiting
+expires_at = now + 5 minutes
+
+The response contains:
+
+{
+"uuid": "session-uuid",
+"url": "/qr/session-uuid"
+}
+2. QR scanning
+
+The phone opens:
+
+/qr/{uuid}
+
+The user sees login information:
+
+IP address
+Browser
+Operating system
+3. Approval
+
+After confirmation:
+
+waiting
+|
+v
+approved
+
+The server:
+
+saves user id;
+broadcasts LoginApproved event;
+notifies the computer through Laravel Reverb.
+4. Consuming session
+
+The computer receives WebSocket event:
+
+login.approved
+
+Then calls:
+
+POST /qr/consume/{uuid}
+
+Server:
+
+checks status;
+checks expiration;
+logs the user in;
+regenerates session;
+deletes QR session.
+
+Final state:
+
+approved
+|
+v
+consumed
+|
+v
+deleted
+Security
+
+Implemented protections:
+
+QR sessions have expiration time.
+UUID can only be used once.
+Already processed sessions cannot be approved again.
+Expired sessions cannot be consumed.
+WebSocket event does not authenticate users directly.
+Authentication happens only after server-side validation.
+QR sessions are automatically deleted after expiration.
+Session regeneration after login.
+Testing
+
+Run Laravel tests:
+
+php artisan test
+
+The project includes tests for:
+
+QR session creation
+QR approval
+Expired QR protection
+Duplicate approval protection
+Session consuming
+Session deletion
+QR information endpoint
+Invalid QR UUID handling
+Code quality
+Laravel Pint
+
+Check code style:
+
+./vendor/bin/pint --test
+
+Fix formatting:
+
+./vendor/bin/pint
+Larastan
+
+Run static analysis:
+
+composer analyse
+CI Pipeline
+
+GitHub Actions automatically runs:
+
+Push / Pull Request
+
+        |
+        v
+
+Install dependencies
+
+        |
+        v
+
+Laravel Pint
+
+        |
+        v
+
+Larastan
+
+        |
+        v
+
+PHPUnit Tests
+
+        |
+        v
+
+Vite Build
+
+If any step fails, the pipeline stops.
+
+Project structure
+app/
+├── Events/
+│    └── LoginApproved.php
+│
+├── Http/
+│    └── Controllers/
+│         └── LoginSessionController.php
+│
+└── Models/
+└── LoginSession.php
+
+
+resources/
+└── js/
+└── Pages/
+└── Qr/
+
+
+database/
+└── migrations/
+└── create_login_sessions_table.php
+
+
+tests/
+└── Feature/
+└── LoginSessionTest.php
+Future improvements
+
+Possible future features:
+
+Device management page
+Ability to revoke trusted devices
+Remembered devices
+Rate limiting improvements
+Docker environment
+Automated deployment to VPS
+Notifications about new logins
+License
+
+This project is open-source and available under the MIT License.

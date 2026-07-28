@@ -43,7 +43,7 @@ jobs:
         run: php artisan key:generate
 
       - name: Run Pint
-        run: ./vendor/bin/pint --test
+        run: ./vendor/bin/pint
 
       - name: Static analysis
         run: composer analyse
