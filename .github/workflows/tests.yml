@@ -45,8 +45,11 @@ jobs:
       - name: Run Pint
         run: ./vendor/bin/pint --test
 
-      - name: Run tests
-        run: php artisan test
+      - name: Install Node dependencies
+        run: npm ci
 
       - name: Build assets
         run: npm run build
+
+      - name: Run tests
+        run: php artisan test
