@@ -45,6 +45,9 @@ jobs:
       - name: Run Pint
         run: ./vendor/bin/pint --test
 
+      - name: Static analysis
+        run: composer analyse
+
       - name: Install Node dependencies
         run: npm ci
 
