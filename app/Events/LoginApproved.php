@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
 class LoginApproved implements ShouldBroadcast
@@ -14,7 +14,7 @@ class LoginApproved implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('login.'.$this->uuid),
+            new Channel('login.'.$this->uuid),
         ];
     }
 

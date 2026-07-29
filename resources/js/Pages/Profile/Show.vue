@@ -63,7 +63,7 @@ onMounted(async () => {
 
 
 
-                <div  class="mt-10 sm:mt-0" v-if="userdevice !== 'desktop'">
+                <div  class="mt-10 sm:mt-0" >
                     <SectionBorder />
 
                     <QrScannerForm />

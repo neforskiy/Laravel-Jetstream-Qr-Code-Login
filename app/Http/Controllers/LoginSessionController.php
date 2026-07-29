@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\LoginApproved;
+use App\Events\LoginRejected;
 use App\Models\LoginSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -114,5 +115,34 @@ class LoginSessionController extends Controller
                 'user_agent' => $user_agent,
             ]
         );
+    }
+
+    public function reject(string $uuid)
+    {
+        $session = LoginSession::where('uuid', $uuid)->firstOrFail();
+
+        if($session->expires_at->isPast()) {
+            return response()->json([
+                'ok' => false,
+                'reason' => 'expired',
+            ], 410);
+        }
+
+        if ($session->status !== 'waiting') {
+            return response()->json([
+               'ok' => false,
+               'reason' => 'already_processed',
+            ], 409);
+        }
+
+        $session->update([
+           'status' => 'rejected',
+        ]);
+
+        broadcast(new LoginRejected($uuid));
+
+        return response()->json([
+            'ok' => true,
+        ]);
     }
 }

@@ -7,12 +7,12 @@ import InputError from '@/Components/InputError.vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
-
 import QRCode from 'qrcode'
 import {ref, onMounted, computed} from 'vue'
 import axios from 'axios'
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import Modal from "@/Components/Modal.vue";
+import Swal from 'sweetalert2';
 
 const userdevice = ref('desktop') // безопасное значение по умолчанию
 
@@ -57,16 +57,37 @@ let timerInterval = null
 const fetchQrSession = async () => {
     qrImage.value = ''
 
+    if (echoChannel && uuid.value) {
+        Echo.leave(`login.${uuid.value}`)
+    }
+
     await axios.get('/sanctum/csrf-cookie')
+
     const res = await axios.post('/api/qr/session')
+
     uuid.value = res.data.uuid
     qrUrl.value = res.data.url
     qrImage.value = await QRCode.toDataURL(qrUrl.value)
 
-    echoChannel = Echo.private(`login.${uuid.value}`)
+    echoChannel = Echo.channel(`login.${uuid.value}`)
         .listen('.login.approved', async () => {
             await axios.post(`/qr/consume/${uuid.value}`)
             window.location.href = '/dashboard'
+        })
+        .listen('.login.rejected', async () => {
+            const oldUuid = uuid.value
+
+            Echo.leave(`login.${oldUuid}`)
+
+            await closeQrModal()
+
+            await Swal.fire({
+                title: 'Вход был отклонён',
+                icon: 'error',
+                text: 'Пользователь отклонил вход.'
+            })
+
+            await axios.delete(`/api/qr/session/${oldUuid}`)
         })
 }
 
@@ -161,7 +182,7 @@ const formattedTime = computed(() => {
 
             <div class="items-center mt-4">
                 <button
-                    v-if="userdevice === 'desktop'"
+
                     type="button"
                     @click="openQrModal"
                     class="mr-4 underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"

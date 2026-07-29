@@ -26,6 +26,7 @@
         "laravel-echo": "^2.3.7",
         "pusher-js": "^8.5.0",
         "qrcode": "^1.5.4",
+        "sweetalert2": "^11.26.25",
         "ua-parser-js": "^2.0.10",
         "vue-qrcode-reader": "^5.7.3"
     }

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable();
             $table->ipAddress();
             $table->string('user_agent');
-            $table->string('status')->default('waiting'); // 3 statuses: waiting | approved | expired + consumed(
+            $table->string('status')->default('waiting'); // 5 statuses: waiting | approved | expired | consumed | rejected
             $table->timestamp('expires_at');
             $table->timestamps();
 

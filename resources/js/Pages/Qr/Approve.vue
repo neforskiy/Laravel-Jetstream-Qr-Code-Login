@@ -58,9 +58,10 @@ const approve = async () => {
 }
 const toDashboardAndDeleteQrSession = async () => {
     try {
-        await axios.delete(`/api/qr/session/${props.uuid}`)
+        // await axios.delete(`/api/qr/session/${props.uuid}`)
+        await axios.post(`/qr/reject/${props.uuid}`)
     } catch (error) {
-        console.error('Не удалось удалить QR-сессию: ', error)
+        console.error('Не удалось отклонить QR-сессию: ', error)
     }
     window.location.href = '/dashboard'
     }

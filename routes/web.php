@@ -25,5 +25,5 @@ Route::middleware([
     Route::get('/qr/{uuid}', [LoginSessionController::class, 'show']);
     Route::post('/qr/approve/{uuid}', [LoginSessionController::class, 'approve'])
         ->middleware('throttle:5,1');
-
+    Route::post('/qr/reject/{uuid}', [LoginSessionController::class, 'reject']);
 });

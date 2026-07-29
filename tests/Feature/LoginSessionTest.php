@@ -207,4 +207,31 @@ class LoginSessionTest extends TestCase
 
         $response->assertRedirect('/login');
     }
+
+    public function test_guest_cannot_reject_qr_session()
+    {
+        $session = LoginSession::factory()->create();
+
+        $response = $this->post("/qr/reject/{$session->uuid}/");
+
+        $response->assertRedirect('/login');
+    }
+
+    public function test_user_can_reject_qr_session()
+    {
+        $user = User::factory()->create();
+
+        $session = LoginSession::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson("/qr/reject/{$session->uuid}");
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('login_sessions', [
+            'uuid' => $session->uuid,
+            'status' => 'rejected',
+        ]);
+    }
 }
